@@ -16,7 +16,7 @@ namespace AutoClicker
         {
             base.OnLoad(e);
 
-            timer1.Interval = 100;
+            timer1.Interval = 50;
             timer1.Tick += Timer1_Tick;
             timer1.Start();
 
@@ -116,12 +116,12 @@ namespace AutoClicker
 
         private void button1_Click(object sender, EventArgs e)
         {
-           CutPicture(pictureBox1.Image as Bitmap);
+            CutPicture(pictureBox1.Image as Bitmap);
         }
         //锐化
         private void button6_Click(object sender, EventArgs e)
         {
-            foreach(var grid in AllMatchGrids)
+            foreach (var grid in AllMatchGrids)
             {
                 grid.Picture = Ruihua(grid.Picture);
             }
@@ -169,7 +169,7 @@ namespace AutoClicker
         {
             if (mMatchState == MatchState.None)
             {
-                Bitmap imgCatched= CatchScreen();
+                Bitmap imgCatched = CatchScreen();
                 pictureBox1.Image = imgCatched;
                 CutPicture(imgCatched);
                 MatchPicture();
@@ -242,7 +242,7 @@ namespace AutoClicker
                 {
                     foreach (MatchGrid grid2 in AllMatchGrids)
                     {
-                        if (grid2.Valid && grid2.ImageType==MatchGridType.B)
+                        if (grid2.Valid && grid2.ImageType == MatchGridType.B)
                         {
                             PicDiff(grid, grid2);
                             yield return grid2;
@@ -260,49 +260,25 @@ namespace AutoClicker
                 if (grid.Valid && grid.ImageType == MatchGridType.A && grid.MatchedGrid == null)
                 {
                     int minv = int.MaxValue;
-                    MatchGrid mg = null;
+                    MatchGrid ming = null;
                     foreach (MatchGrid grid2 in AllMatchGrids)
                     {
-                        if (grid2.Valid && grid2.ImageType == MatchGridType.B)
+                        if (grid2.Valid && grid2.ImageType == MatchGridType.B )
                         {
                             int v = PicDiffValue(grid.Picture, grid2.Picture);
                             if (v < minv)
                             {
-                                if (grid2.DebugDiffPicValue > 0 )
-                                {
-                                    //grid和grid2更匹配，则取消之前的匹配
-                                    if (v < grid2.DiffPicValue)
-                                    {
-                                        grid2.MatchedGrid.MatchedGrid = null;
-                                        grid2.MatchedGrid=null;
-                                    }
-                                    else
-                                    {
-                                        continue;
-                                    }
-                                }
                                 minv = v;
-                                mg = grid2;
+                                ming = grid2;
                             }
-                            grid.ToMatchGrids.Add(new Tuple<int, MatchGrid>(v, grid2));
                         }
                     }
-                    grid.MatchedGrid = mg;
-                    mg.MatchedGrid = grid;
-                    mg.DiffPicValue = minv;
-
-                }
-            }
-
-            foreach (var grid in AllMatchGrids)
-            {
-                if (grid.Valid &&grid.ImageType==MatchGridType.A&& grid.MatchedGrid == null)
-                {
-                    grid.ToMatchGrids.Sort((a, b) => a.Item1 - b.Item1);
-                    var t = grid.ToMatchGrids.Find(x => x.Item2.MatchedGrid == null);
-                    grid.MatchedGrid = t.Item2;
-                    t.Item2.MatchedGrid = grid;
-
+                    grid.MatchedGrid = ming;
+                    //if(ming.MatchedGrid != null)
+                    //{
+                    //    MessageBox.Show("double choose me!");
+                    //}
+                    //ming.MatchedGrid = grid;
                 }
             }
 
@@ -331,6 +307,7 @@ namespace AutoClicker
             Graphics gg = Graphics.FromImage(imgScreen);
             gg.CopyFromScreen(new Point(AoffsetX, AoffsetY), new Point(0, 0), new Size(280, 372));
             gg.Dispose();
+            //imgScreen.Save($"{DateTime.Now.Ticks}.png");
             return imgScreen;
         }
 
@@ -403,14 +380,29 @@ namespace AutoClicker
             int ret = 0;
             for (int i = 0; i < MatchGridSize; i++)
             {
+                 
                 for (int j = 0; j < MatchGridSize; j++)
                 {
                     Color ca = a.GetPixel(i, j);
                     Color cb = b.GetPixel(i, j);
-                    if (!DiffColor(ca, ColorB, 10) || !DiffColor(cb, ColorB, 10) || !DiffColor(ca, cb, 10))
+                    if (!DiffColor(ca, cb, 10))
                     {
                         ret += 0;
                         c.SetPixel(i, j, Color.Black);
+                    
+                    }
+                    else if(!DiffColor(cb, ColorB, 10))
+                    {
+                        Color bg = a.GetPixel(4, j);//ref bg
+                        if (!DiffColor(ca, bg, 10))
+                        {
+                            ret += 1;
+                            c.SetPixel(i, j, Color.White);
+                        }
+                        else
+                        {
+                            c.SetPixel(i, j, Color.Black);
+                        }
                     }
                     else
                     {
@@ -432,9 +424,21 @@ namespace AutoClicker
                 {
                     Color ca = a.GetPixel(i, j);
                     Color cb = b.GetPixel(i, j);
-                    if (!DiffColor(ca, ColorB, 10) || !DiffColor(cb, ColorB, 10) || !DiffColor(ca, cb, 20))
+                    if (!DiffColor(ca, cb, 10))
                     {
                         ret += 0;
+
+                    }
+                    else if (!DiffColor(cb, ColorB, 10))
+                    {
+                        Color bg = a.GetPixel(4, j);//ref bg
+                        if (!DiffColor(ca, bg, 10))
+                        {
+                            ret += 1;
+                        }
+                        else
+                        {
+                        }
                     }
                     else
                     {
